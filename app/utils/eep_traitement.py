@@ -1,4 +1,4 @@
-from app.utils.eepower_utils import simple_report, group_by_scenario, pire_cas
+from .eepower_utils import simple_report, group_by_scenario, pire_cas
 from pandas import ExcelWriter
 from os.path import join
 
