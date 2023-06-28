@@ -34,7 +34,7 @@ def report(data, target_rep):
     xl_output_path = Path(target_rep).joinpath(XL_FILE_NAME)
     tex_output_path = Path(target_rep).joinpath(TEX_FILE_NAME)
 
-    writer = ExcelWriter(xl_output_path)
+
     scenarios = data["SCENARIOS"]
 
     for scenario in scenarios:
@@ -63,14 +63,14 @@ def report(data, target_rep):
     pire_cas_rap = pire_cas(reports, scenarios)
 
     try:
-        pire_cas_rap.to_excel(writer, sheet_name='Pire Cas')
-        latex_table_filepath = df_to_tabularay(pire_cas_rap, tex_output_path)
+        with ExcelWriter(xl_output_path, engine="openpyxl") as writer:
+            pire_cas_rap.to_excel(writer, sheet_name='Pire Cas')
+            latex_table_filepath = df_to_tabularay(pire_cas_rap, tex_output_path)
 
-        for scenario in scenarios:
-            i = scenarios.index(scenario)
-            reports[i].to_excel(writer, sheet_name=('Scénario {0}'.format(scenario)))
-        writer.save()
-        # on retourne le repertoire et le fichier séparément
+            for scenario in scenarios:
+                i = scenarios.index(scenario)
+                reports[i].to_excel(writer, sheet_name=('Scénario {0}'.format(scenario)))
+            # on retourne le repertoire et le fichier séparément
         return xl_output_path, latex_table_filepath
 
     except PermissionError:
