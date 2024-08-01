@@ -88,7 +88,7 @@ def assemble_doc(doc_id):
     try:
         filename = doc['Nom'] + '.docx'
         rendered_doc = Path('generated/developpement/doc')/filename
-        doc_name = Path(render_document(template_file, rendered_doc, projects, persons[0])).name
+        doc_name = Path(render_document(template_file, rendered_doc.absolute(), projects, persons[0])).name
         status = change_status(doc_id, "Généré")
 
         return get_doc_file(doc_name)
