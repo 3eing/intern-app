@@ -50,7 +50,7 @@ def change_status(doc_id, status):
     if status not in ("Généré", "Non Généré", "Erreur", "Disponible"):
         raise ValueError("Le status : {0} n'existe pas".format(status))
     try:
-        print (doc_id)
+        print(doc_id)
         DOC_TABLE.update(doc_id, {"Statut document": status})
     except HTTPError as e:
         raise ValueError("Erreur d'accès : {0}".format(e))
