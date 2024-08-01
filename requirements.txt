@@ -35,5 +35,7 @@ colour~=0.1.5
 Flask-Pydantic>=0.11
 tinydb~=4.7.0
 uvicorn
-requests
-docxtpl
+requests~=2.31.0
+docxtpl~=0.16.7
+Werkzeug~=2.3.6
+pyairtable~=2.3.3
