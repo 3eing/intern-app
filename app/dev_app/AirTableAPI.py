@@ -52,7 +52,7 @@ def change_status(doc_id, status):
     try:
         doc_table.update(doc_id, {"Statut document": status})
     except HTTPError as e:
-        raise ValueError("Erreur d'accès : {0}".format(doc_id))
+        raise ValueError("Erreur d'accès : {0}".format(e))
 
 
 @airtable_api.route('/air/doc/<string:doc_id>', methods=['GET'])
