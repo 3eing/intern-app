@@ -14,15 +14,15 @@ airtable_api = Blueprint('airtable_api', __name__)
 api = Api(api_key)
 BASE_ID = api.bases()[0].id
 
-doc_table = api.table(BASE_ID, "Documents")
-person_table = api.table(BASE_ID, "Personnes")
-projet_table = api.table(BASE_ID, "Projets")
+DOC_TABLE = api.table(BASE_ID, "Documents")
+PERSON_TABLE = api.table(BASE_ID, "Personnes")
+PROJET_TABLE = api.table(BASE_ID, "Projets")
 
 
 @airtable_api.route("/air/person/GET/<person_id>", methods=['GET', 'POST'])
 def get_person(person_id):
     try:
-        person = person_table.get(record_id=person_id)['fields']
+        person = PERSON_TABLE.get(record_id=person_id)['fields']
         return person
     except HTTPError as e:
         raise ValueError("L'entrée personne : {0} n'existe pas".format(person_id))
@@ -31,7 +31,7 @@ def get_person(person_id):
 @airtable_api.route("/air/person/GET/<project_id>", methods=['GET', 'POST'])
 def get_project(project_id):
     try:
-        project = projet_table.get(record_id=project_id)['fields']
+        project = PROJET_TABLE.get(record_id=project_id)['fields']
         return project
     except HTTPError as e:
         raise ValueError("L'entrée projet : {0} n'existe pas".format(project_id))
@@ -40,7 +40,7 @@ def get_project(project_id):
 @airtable_api.route("/air/doc/GET/<doc_id>", methods=['GET', 'POST'])
 def get_doc(doc_id):
     try:
-        doc = doc_table.get(record_id=doc_id)['fields']
+        doc = DOC_TABLE.get(record_id=doc_id)['fields']
         return doc
     except HTTPError as e:
         raise ValueError("L'entrée doc : {0} n'existe pas".format(doc_id))
@@ -50,7 +50,8 @@ def change_status(doc_id, status):
     if status not in ("Généré", "Non Généré", "Erreur", "Disponible"):
         raise ValueError("Le status : {0} n'existe pas".format(status))
     try:
-        doc_table.update(doc_id, {"Statut document": status})
+        print (doc_id)
+        DOC_TABLE.update(doc_id, {"Statut document": status})
     except HTTPError as e:
         raise ValueError("Erreur d'accès : {0}".format(e))
 
