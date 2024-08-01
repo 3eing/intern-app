@@ -24,14 +24,18 @@
                     <h2>Précision des bus non voulus</h2>
 
                         Vous pouvez maintenant préciser quels bus vous ne souhaitez pas dans le rapport
-                        en précisant les paterns dans le noms du bus à exclure.
+                        en précisant les patterns dans les noms du bus à exclure.
+
+                        “-sec” pour tout ce qui contient la valeur “-sec”, cela peut inclure “-sect” si ce bus est présent
+                        Pour retirer tout ce qui fini pas “-sec” utiliser le code de fin de chaine “$” soit “-sec$”
+                        Dans ce cas, “-sect” ne sera pas retiré.
+
                         Par exemple : <br/>
 
                         <div class="code">
                             <code>
-                                -SEC <br/>
-                                -PRIM <br/>
-                                F- <br/>
+                                -SEC$ <br/>
+                                -PRIM$ <br/>
                             </code><br/>
                         </div>
                         pour exclure les bus des transformateurs et des portes-fusibles dans le cas où ils seraient nommés :
