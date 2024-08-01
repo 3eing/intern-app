@@ -50,18 +50,23 @@ def change_status(doc_id, status):
     if status not in ("Généré", "Non Généré", "Erreur", "Disponible"):
         raise ValueError("Le status : {0} n'existe pas".format(status))
     try:
+        print(f"""
+        fonction "change_status"
+        Le statuts est {status}
+        le doc ID est {doc_id} 
+        """)
         DOC_TABLE.update(doc_id, {"Statut document": status})
         return status
     except HTTPError as e:
         raise ValueError("Erreur d'accès : {0}".format(e))
 
 
-@airtable_api.route('/air/doc/<string:doc_id>', methods=['GET'])
-def get_doc_file(doc_id):
-    path = Path(f"generated/developpement/doc/{doc_id}")
+@airtable_api.route('/air/doc/<string:doc_name>', methods=['GET'])
+def get_doc_file(doc_name):
+    path = Path(f"generated/developpement/doc/{doc_name}")
     # Check if the file exists
     if not path.exists():
-        abort(404, description=f"Le fichier {doc_id} n'a pas été trouvé")
+        abort(404, description=f"Le fichier {doc_name} n'a pas été trouvé")
 
     dir = path.absolute().parent
     file = path.name
@@ -89,11 +94,15 @@ def assemble_doc(doc_id):
     try:
         filename = doc['Nom'] + '.docx'
         rendered_doc = Path('generated/developpement/doc')/filename
-        doc = Path(render_document(template_file, rendered_doc, projects, persons[0])).name
-
+        doc_name = Path(render_document(template_file, rendered_doc, projects, persons[0])).name
+        print(f"""
+        fonction "assemble_doc"
+        le doc ID est {doc_id}
+        le doc name est {doc_name}
+        """)
         status = change_status(doc_id, "Généré")
 
-        return get_doc_file(doc)
+        return get_doc_file(doc_name)
 
     except Exception as e:
         change_status(filename, "Erreur")
