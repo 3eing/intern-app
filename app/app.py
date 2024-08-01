@@ -50,10 +50,8 @@ def create_app():
                 "REPORT_TYPE": []}
 
     with app.app_context():
-        from app.dev_app.DbDevApi import db_dev_api
-        app.register_blueprint(db_dev_api)
-        # from app.dev_app.AirTableAPI import airtable_api
-        # app.register_blueprint(airtable_api)
+        from app.dev_app.AirTableAPI import airtable_api
+        app.register_blueprint(airtable_api)
 
     @app.route('/')
     def index():
