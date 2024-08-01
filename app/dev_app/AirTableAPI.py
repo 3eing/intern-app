@@ -18,6 +18,8 @@ DOC_TABLE = api.table(BASE_ID, "Documents")
 PERSON_TABLE = api.table(BASE_ID, "Personnes")
 PROJET_TABLE = api.table(BASE_ID, "Projets")
 
+ROOT = Path(__file__).parents[2]
+
 
 @airtable_api.route("/air/person/GET/<person_id>", methods=['GET', 'POST'])
 def get_person(person_id):
@@ -58,7 +60,7 @@ def change_status(doc_id, status):
 
 @airtable_api.route('/air/doc/<string:doc_name>', methods=['GET'])
 def get_doc_file(doc_name):
-    path = Path(f"generated/developpement/doc/{doc_name}")
+    path = ROOT/Path(f"generated/developpement/doc/{doc_name}")
     # Check if the file exists
     if not path.exists():
         abort(404, description=f"Le fichier {doc_name} n'a pas été trouvé")
@@ -87,8 +89,8 @@ def assemble_doc(doc_id):
 
     try:
         filename = doc['Nom'] + '.docx'
-        rendered_doc = Path('generated/developpement/doc')/filename
-        doc_name = Path(render_document(template_file, rendered_doc.absolute(), projects, persons[0])).name
+        rendered_doc = ROOT/Path('generated/developpement/doc')/filename
+        doc_name = Path(render_document(template_file, rendered_doc, projects, persons[0])).name
         status = change_status(doc_id, "Généré")
 
         return get_doc_file(doc_name)
