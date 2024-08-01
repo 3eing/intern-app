@@ -46,12 +46,21 @@ def get_doc(doc_id):
         raise ValueError("L'entrée doc : {0} n'existe pas".format(doc_id))
 
 
-@airtable_api.route('/air/doc/<string:id>', methods=['GET'])
-def get_doc_file(id):
-    path = Path(f"generated/developpement/doc/{id}.docx")
+def change_status(doc_id, status):
+    if status not in ("Généré", "Non Généré", "Erreur", "Disponible"):
+        raise ValueError("Le status : {0} n'existe pas".format(status))
+    try:
+        doc_table.update(doc_id, {"Status": status})
+    except HTTPError as e:
+        raise ValueError("L'entrée doc : {0} n'existe pas".format(doc_id))
+
+
+@airtable_api.route('/air/doc/<string:doc_id>', methods=['GET'])
+def get_doc_file(doc_id):
+    path = Path(f"generated/developpement/doc/{doc_id}")
     # Check if the file exists
     if not path.exists():
-        abort(404, description=f"Le fichier {id} n'a pas été trouvé")
+        abort(404, description=f"Le fichier {doc_id} n'a pas été trouvé")
 
     dir = path.absolute().parent
     file = path.name
@@ -74,10 +83,20 @@ def assemble_doc(doc_id):
     for person_id in doc['Personnes']:
         persons.append(get_person(person_id))
 
-    template_file = urlretrieve(doc['Templates']['url'])
+    template_file, _ = urlretrieve(doc['Templates'][0]['url'])
 
-    filename = doc['Nom'] + '.docx'
-    rendered_doc = Path('generated'/'developpement'/filename)
-    doc = render_document(template_file, rendered_doc, projects, persons[0])
+    try:
+        filename = doc['Nom'] + '.docx'
+        rendered_doc = Path('generated/developpement/doc')/filename
+        doc = Path(render_document(template_file, rendered_doc, projects, persons[0])).name
+
+        change_status(doc_id, "Généré")
+
+        return get_doc_file(doc)
+
+    except Exception as e:
+        change_status(doc_id, "Erreur")
+        raise Exception(e)
+
 
 
