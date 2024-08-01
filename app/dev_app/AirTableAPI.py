@@ -50,7 +50,7 @@ def change_status(doc_id, status):
     if status not in ("Généré", "Non Généré", "Erreur", "Disponible"):
         raise ValueError("Le status : {0} n'existe pas".format(status))
     try:
-        doc_table.update(doc_id, {"Status": status})
+        doc_table.update(doc_id, {"Statut document": status})
     except HTTPError as e:
         raise ValueError("L'entrée doc : {0} n'existe pas".format(doc_id))
 
@@ -95,7 +95,7 @@ def assemble_doc(doc_id):
         return get_doc_file(doc)
 
     except Exception as e:
-        change_status(doc_id, "Erreur")
+        change_status(filename, "Erreur")
         raise Exception(e)
 
 
