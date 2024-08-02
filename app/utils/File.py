@@ -234,7 +234,7 @@ def render_document(template_path, doc_path, projects, person):
     :return: filename of the document
     :rtype: str
     """
-
+    create_dir_if_dont_exist(doc_path.parent)
     doc = DocxTemplate(template_path)
     context = {'projects': projects, 'person': person}
     doc.render(context)
