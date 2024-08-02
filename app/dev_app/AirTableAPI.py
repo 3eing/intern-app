@@ -20,6 +20,7 @@ PROJET_TABLE = api.table(BASE_ID, "Projets")
 ROOT = Path(__file__).parents[2]
 GEN_PATH = ROOT/Path('generated/developpement/doc')
 
+current_app.debug = True
 
 @airtable_api.route("/air/person/GET/<person_id>", methods=['GET', 'POST'])
 def get_person(person_id):
@@ -78,7 +79,7 @@ def assemble_doc(doc_id):
     persons = []
     try:
         doc = get_doc(doc_id)
-        current_app.logger.debug(f"Fetched document: {doc}")
+        current_app.logger.info(f"Fetched document: {doc}")
 
     except HTTPError as e:
         current_app.logger.error(f"Error fetching document: {e}")

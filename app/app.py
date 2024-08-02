@@ -52,14 +52,13 @@ def create_app():
         app.register_blueprint(airtable_api)
 
     # Configure logging
-    if not app.debug:
-        # In production mode, log to stdout/stderr
-        stream_handler = logging.StreamHandler()
-        stream_handler.setLevel(logging.DEBUG)
-        stream_handler.setFormatter(logging.Formatter(
-            '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
-        ))
-        app.logger.addHandler(stream_handler)
+    # In production mode, log to stdout/stderr
+    stream_handler = logging.StreamHandler()
+    stream_handler.setLevel(logging.DEBUG)
+    stream_handler.setFormatter(logging.Formatter(
+        '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+    ))
+    app.logger.addHandler(stream_handler)
 
     @app.route('/')
     def index():
