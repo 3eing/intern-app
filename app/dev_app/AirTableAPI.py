@@ -4,7 +4,7 @@ from requests.exceptions import HTTPError
 from urllib.request import urlretrieve
 from app.utils.File import render_document
 from pathlib import Path
-import os
+import os, logging
 
 
 api_key = os.environ.get('AIR_KEY')
@@ -19,6 +19,7 @@ PERSON_TABLE = api.table(BASE_ID, "Personnes")
 PROJET_TABLE = api.table(BASE_ID, "Projets")
 
 ROOT = Path(__file__).parents[2]
+GEN_PATH = ROOT/Path('generated/developpement/doc')
 
 
 @airtable_api.route("/air/person/GET/<person_id>", methods=['GET', 'POST'])
@@ -60,13 +61,13 @@ def change_status(doc_id, status):
 
 @airtable_api.route('/air/doc/<string:doc_name>', methods=['GET'])
 def get_doc_file(doc_name):
-    path = ROOT/Path(f"generated/developpement/doc/{doc_name}")
+    path = GEN_PATH/doc_name
+    logging.debug(f"Looking for file at: {path}")
     # Check if the file exists
     if not path.exists():
+        logging.error(f"File not found: {path}")
         abort(404, description=f"Le fichier {doc_name} n'a pas été trouvé")
-    dir = path.absolute().parent
-    file = path.name
-    return send_from_directory(dir, file, as_attachment=True)
+    return send_from_directory(GEN_PATH, doc_name, as_attachment=True)
 
 
 @airtable_api.route("/air/doc/assemble/<doc_id>", methods=['GET', 'POST'])
@@ -75,6 +76,7 @@ def assemble_doc(doc_id):
     persons = []
     try:
         doc = get_doc(doc_id)
+        logging.debug(f"Fetched document: {doc}")
 
     except HTTPError as e:
         raise ValueError("L'entrée doc : {0} n'existe pas".format(doc_id))
@@ -86,18 +88,23 @@ def assemble_doc(doc_id):
         persons.append(get_person(person_id))
 
     template_file, _ = urlretrieve(doc['Templates'][0]['url'])
+    logging.debug(f"Template file retrieved: {template_file}")
 
     try:
         filename = doc['Nom'] + '.docx'
-        rendered_doc = ROOT/Path('generated/developpement/doc')/filename
+        rendered_doc = GEN_PATH/filename
+        logging.debug(f"Rendering document to: {rendered_doc}")
         doc_name = Path(render_document(template_file, rendered_doc, projects, persons[0])).name
         status = change_status(doc_id, "Généré")
+        logging.debug(f"Document generated: {doc_name}, status updated to: {status}")
 
         return get_doc_file(doc_name)
 
     except Exception as e:
+        logging.error(f"Error rendering document: {e}")
         change_status(doc_id, "Erreur")
-        raise Exception(e)
+        raise ValueError("Une erreur s'est produite lors du rendu de documents :{0}".format(e))
+
 
 
 
