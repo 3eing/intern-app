@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-import os
-import pathlib
-import secrets
+import os, pathlib, secrets, logging
 
 from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory
 from werkzeug.utils import secure_filename
@@ -52,6 +50,16 @@ def create_app():
     with app.app_context():
         from app.dev_app.AirTableAPI import airtable_api
         app.register_blueprint(airtable_api)
+
+    # Configure logging
+    if not app.debug:
+        # In production mode, log to stdout/stderr
+        stream_handler = logging.StreamHandler()
+        stream_handler.setLevel(logging.DEBUG)
+        stream_handler.setFormatter(logging.Formatter(
+            '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+        ))
+        app.logger.addHandler(stream_handler)
 
     @app.route('/')
     def index():
