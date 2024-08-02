@@ -71,12 +71,13 @@ def get_doc_file(doc_name):
     if not path.exists():
         current_app.logger.error(f"File not found: {path}")
         raise FileNotFoundError(f"Le fichier {doc_name} n'a pas été trouvé")
-    return send_from_directory(GEN_PATH, doc_name, as_attachment=True)
+    return send_from_directory(GEN_PATH, doc_name, as_attachment=False)
 
 
 @airtable_api.route('/air/doc/list_files', methods=['GET'])
 def get_file_list():
     path = GEN_PATH
+    current_app.logger.debug(f"Listing files in {path}")
     file_list = [(file.name, datetime.fromtimestamp(file.stat().st_mtime).isoformat()) for file in path.iterdir() if file.is_file()]
     current_app.logger.debug(f"Files saved: {file_list}")
     return file_list
