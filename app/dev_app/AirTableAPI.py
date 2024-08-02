@@ -5,6 +5,7 @@ from urllib.request import urlretrieve
 from app.utils.File import render_document
 from pathlib import Path
 import os
+from datetime import datetime
 
 api_key = os.environ.get('AIR_KEY')
 
@@ -69,8 +70,16 @@ def get_doc_file(doc_name):
     current_app.logger.debug(f"Looking for file at: {path}")
     if not path.exists():
         current_app.logger.error(f"File not found: {path}")
-        abort(404, description=f"Le fichier {doc_name} n'a pas été trouvé")
+        raise FileNotFoundError(f"Le fichier {doc_name} n'a pas été trouvé")
     return send_from_directory(GEN_PATH, doc_name, as_attachment=True)
+
+
+@airtable_api.route('/air/doc/list_files', methods=['GET'])
+def get_file_list():
+    path = GEN_PATH
+    file_list = [(file.name, datetime.fromtimestamp(file.stat().st_mtime).isoformat()) for file in path.iterdir() if file.is_file()]
+    current_app.logger.debug(f"Files saved: {file_list}")
+    return file_list
 
 
 @airtable_api.route("/air/doc/assemble/<doc_id>", methods=['GET', 'POST'])
@@ -79,7 +88,7 @@ def assemble_doc(doc_id):
     persons = []
     try:
         doc = get_doc(doc_id)
-        current_app.logger.info(f"Fetched document: {doc}")
+        current_app.logger.info(f"Fetched document: {doc['Nom']}")
 
     except HTTPError as e:
         current_app.logger.error(f"Error fetching document: {e}")
