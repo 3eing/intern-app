@@ -1,11 +1,10 @@
+from flask import Flask, Blueprint, abort, send_from_directory, current_app
 from pyairtable import Api
-from flask import Blueprint, abort, send_from_directory
 from requests.exceptions import HTTPError
 from urllib.request import urlretrieve
 from app.utils.File import render_document
 from pathlib import Path
-import os, logging
-
+import os
 
 api_key = os.environ.get('AIR_KEY')
 
@@ -28,6 +27,7 @@ def get_person(person_id):
         person = PERSON_TABLE.get(record_id=person_id)['fields']
         return person
     except HTTPError as e:
+        current_app.logger.error(f"Error fetching person: {e}")
         raise ValueError("L'entrée personne : {0} n'existe pas".format(person_id))
 
 
@@ -37,6 +37,7 @@ def get_project(project_id):
         project = PROJET_TABLE.get(record_id=project_id)['fields']
         return project
     except HTTPError as e:
+        current_app.logger.error(f"Error fetching project: {e}")
         raise ValueError("L'entrée projet : {0} n'existe pas".format(project_id))
 
 
@@ -46,6 +47,7 @@ def get_doc(doc_id):
         doc = DOC_TABLE.get(record_id=doc_id)['fields']
         return doc
     except HTTPError as e:
+        current_app.logger.error(f"Error fetching doc: {e}")
         raise ValueError("L'entrée doc : {0} n'existe pas".format(doc_id))
 
 
@@ -56,16 +58,16 @@ def change_status(doc_id, status):
         DOC_TABLE.update(doc_id, {"Statut document": status})
         return status
     except HTTPError as e:
+        current_app.logger.error(f"Error changing status: {e}")
         raise ValueError("Erreur lors du changement de status : {0}".format(e))
 
 
 @airtable_api.route('/air/doc/<string:doc_name>', methods=['GET'])
 def get_doc_file(doc_name):
     path = GEN_PATH/doc_name
-    logging.debug(f"Looking for file at: {path}")
-    # Check if the file exists
+    current_app.logger.debug(f"Looking for file at: {path}")
     if not path.exists():
-        logging.error(f"File not found: {path}")
+        current_app.logger.error(f"File not found: {path}")
         abort(404, description=f"Le fichier {doc_name} n'a pas été trouvé")
     return send_from_directory(GEN_PATH, doc_name, as_attachment=True)
 
@@ -76,9 +78,10 @@ def assemble_doc(doc_id):
     persons = []
     try:
         doc = get_doc(doc_id)
-        logging.debug(f"Fetched document: {doc}")
+        current_app.logger.debug(f"Fetched document: {doc}")
 
     except HTTPError as e:
+        current_app.logger.error(f"Error fetching document: {e}")
         raise ValueError("L'entrée doc : {0} n'existe pas".format(doc_id))
 
     for project_id in doc['Projets']:
@@ -88,23 +91,19 @@ def assemble_doc(doc_id):
         persons.append(get_person(person_id))
 
     template_file, _ = urlretrieve(doc['Templates'][0]['url'])
-    logging.debug(f"Template file retrieved: {template_file}")
+    current_app.logger.debug(f"Template file retrieved: {template_file}")
 
     try:
         filename = doc['Nom'] + '.docx'
         rendered_doc = GEN_PATH/filename
-        logging.debug(f"Rendering document to: {rendered_doc}")
+        current_app.logger.debug(f"Rendering document to: {rendered_doc}")
         doc_name = Path(render_document(template_file, rendered_doc, projects, persons[0])).name
         status = change_status(doc_id, "Généré")
-        logging.debug(f"Document generated: {doc_name}, status updated to: {status}")
+        current_app.logger.debug(f"Document generated: {doc_name}, status updated to: {status}")
 
         return get_doc_file(doc_name)
 
     except Exception as e:
-        logging.error(f"Error rendering document: {e}")
+        current_app.logger.error(f"Error rendering document: {e}")
         change_status(doc_id, "Erreur")
         raise ValueError("Une erreur s'est produite lors du rendu de documents :{0}".format(e))
-
-
-
-
