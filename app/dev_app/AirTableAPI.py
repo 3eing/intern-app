@@ -1,4 +1,4 @@
-from flask import Flask, Blueprint, abort, send_from_directory, current_app
+from flask import Blueprint, send_from_directory, current_app
 from pyairtable import Api
 from requests.exceptions import HTTPError
 from urllib.request import urlretrieve
@@ -137,8 +137,11 @@ def fetch_attributes_of_entry(entry: dict) -> dict:
                 for record_id in item:
                     i += 1
                     fetched = get_entry(type, record_id)
-                    if isinstance(fetched, dict):
+                    if key == 'Contacts':
+                        fetched = '\n'.join([fetched['Nom'], fetched['Rôle'], fetched['Téléphone'], fetched['Email']])
+                    elif isinstance(fetched, dict):
                         fetched = fetched["Nom"]
+
                     entry[key][i] = fetched
             else:
                 fetched = get_entry(type, item)
