@@ -6,15 +6,16 @@ from app.utils.File import render_document
 from pathlib import Path
 import os
 from datetime import datetime
+from app.dev_app import AirTableORM as orm
 
 # Fetch API key from environment variables for Airtable authentication
-api_key = os.environ.get('AIR_KEY')
+API_KEY = os.environ.get('AIR_KEY')
 
 # Initialize a Flask Blueprint for organizing API routes related to Airtable
 airtable_api = Blueprint('airtable_api', __name__)
 
 # Initialize Airtable API client
-api = Api(api_key)
+api = Api(API_KEY)
 
 # Get the base ID of the first base (assuming only one base is used)
 BASE_ID = api.bases()[0].id
@@ -29,7 +30,7 @@ TABLE_NAMES = {
     "COMPAGNIE": "Compagnies",
     "CONTACT": "Contacts",
     "XP": 'Expériences',
-    "TEMPLATE": "Template"
+    "TEMPLATE": "Templates"
 }
 
 # Initialize the tables
@@ -57,8 +58,12 @@ def get_entry(entry_type: str, entry_id: str) -> dict:
         entry = TABLES[entry_type].get(record_id=entry_id)['fields']
         return entry
     except HTTPError as e:
-        current_app.logger.error(f"Error fetching {entry_type}: {e}")
-        raise ValueError("L'entrée {entry_type} : {0} n'existe pas".format(entry_id))
+        current_app.logger.error(f"Error fetching {TABLES[entry_type].name}: {e}")
+        if e.response.status_code == 403:
+            raise ConnectionRefusedError(f"L'accès à {TABLES[entry_type].name} : {entry_id} est "
+                                         f"refusé par Airtable ou la table {TABLES[entry_type].nam} n'existe pas")
+        else:
+            raise ValueError(f"L'entrée {TABLES[entry_type].name} : {entry_id} n'existe pas")
 
 
 def change_status(doc_id: str, status: str) -> str:
@@ -185,7 +190,8 @@ def assemble_doc(doc_id: str):
         raise ValueError("Une erreur s'est produite lors du rendu de documents :{0}".format(e))
 
     for person_id in doc['Personnes']:
-        persons.append(get_entry("PERSON", person_id))
+        person = orm.Person.from_id(person_id)
+        persons.append(person)
 
     # Download template file from the URL provided in the document record
     template = get_entry("TEMPLATE", doc['Templates'][0])
@@ -197,7 +203,7 @@ def assemble_doc(doc_id: str):
         filename = doc['Nom'] + '.docx'
         rendered_doc = GEN_PATH / filename
         current_app.logger.debug(f"Rendering document to: {rendered_doc}")
-        doc_name = Path(render_document(template_file, rendered_doc, projects, persons[0])).name
+        doc_name = Path(render_document(template_file, rendered_doc, projects, persons)).name
 
         # Update document status to "Généré" after successful rendering
         status = change_status(doc_id, "Généré")
