@@ -28,7 +28,8 @@ TABLE_NAMES = {
     "TAG": "tags",
     "COMPAGNIE": "Compagnies",
     "CONTACT": "Contacts",
-    "XP": 'Expériences'
+    "XP": 'Expériences',
+    "TEMPLATE": "Template"
 }
 
 # Initialize the tables
@@ -187,7 +188,8 @@ def assemble_doc(doc_id: str):
         persons.append(get_entry("PERSON", person_id))
 
     # Download template file from the URL provided in the document record
-    template_file, _ = urlretrieve(doc['Templates'][0]['url'])
+    template = get_entry("TEMPLATE", doc['Templates'][0])
+    template_file, _ = urlretrieve(template['template'][0]['url'])
     current_app.logger.debug(f"Template file retrieved: {template_file}")
 
     try:
