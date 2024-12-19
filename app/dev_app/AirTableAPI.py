@@ -189,8 +189,7 @@ def assemble_doc(doc_id: str):
         raise ValueError("Une erreur s'est produite lors du rendu de documents :{0}".format(e))
 
     for person_id in doc['Personnes']:
-        person = orm.Person.from_id(person_id)
-        persons.append(person)
+        persons.append(get_entry("PERSON", person_id))
 
     # Download template file from the URL provided in the document record
     template = get_entry("TEMPLATE", doc['Templates'][0])
@@ -202,7 +201,7 @@ def assemble_doc(doc_id: str):
         filename = doc['Nom'] + '.docx'
         rendered_doc = GEN_PATH / filename
         current_app.logger.debug(f"Rendering document to: {rendered_doc}")
-        doc_name = Path(render_document(template_file, rendered_doc, projects, persons)).name
+        doc_name = Path(render_document(template_file, rendered_doc, projects, persons[0])).name
 
         # Update document status to "Généré" after successful rendering
         status = change_status(doc_id, "Généré")
