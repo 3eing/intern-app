@@ -6,15 +6,16 @@ from app.utils.File import render_document
 from pathlib import Path
 import os
 from datetime import datetime
+from app.dev_app import AirTableORM as orm
 
 # Fetch API key from environment variables for Airtable authentication
-api_key = os.environ.get('AIR_KEY')
+API_KEY = os.environ.get('AIR_KEY')
 
 # Initialize a Flask Blueprint for organizing API routes related to Airtable
 airtable_api = Blueprint('airtable_api', __name__)
 
 # Initialize Airtable API client
-api = Api(api_key)
+api = Api(API_KEY)
 
 # Get the base ID of the first base (assuming only one base is used)
 BASE_ID = api.bases()[0].id
@@ -189,7 +190,8 @@ def assemble_doc(doc_id: str):
         raise ValueError("Une erreur s'est produite lors du rendu de documents :{0}".format(e))
 
     for person_id in doc['Personnes']:
-        persons.append(get_entry("PERSON", person_id))
+        person = orm.Person.from_id(person_id)
+        persons.append(person)
 
     # Download template file from the URL provided in the document record
     template = get_entry("TEMPLATE", doc['Templates'][0])
@@ -201,7 +203,7 @@ def assemble_doc(doc_id: str):
         filename = doc['Nom'] + '.docx'
         rendered_doc = GEN_PATH / filename
         current_app.logger.debug(f"Rendering document to: {rendered_doc}")
-        doc_name = Path(render_document(template_file, rendered_doc, projects, persons[0])).name
+        doc_name = Path(render_document(template_file, rendered_doc, projects, persons)).name
 
         # Update document status to "Généré" after successful rendering
         status = change_status(doc_id, "Généré")
