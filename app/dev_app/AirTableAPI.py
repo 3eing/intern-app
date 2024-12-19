@@ -6,7 +6,6 @@ from app.utils.File import render_document
 from pathlib import Path
 import os
 from datetime import datetime
-from app.dev_app import AirTableORM as orm
 
 # Fetch API key from environment variables for Airtable authentication
 API_KEY = os.environ.get('AIR_KEY')
