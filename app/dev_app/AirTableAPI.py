@@ -29,7 +29,7 @@ TABLE_NAMES = {
     "COMPAGNIE": "Compagnies",
     "CONTACT": "Contacts",
     "XP": 'Expériences',
-    "TEMPLATE": "Template"
+    "TEMPLATE": "Templates"
 }
 
 # Initialize the tables
@@ -57,8 +57,12 @@ def get_entry(entry_type: str, entry_id: str) -> dict:
         entry = TABLES[entry_type].get(record_id=entry_id)['fields']
         return entry
     except HTTPError as e:
-        current_app.logger.error(f"Error fetching {entry_type}: {e}")
-        raise ValueError("L'entrée {entry_type} : {0} n'existe pas".format(entry_id))
+        current_app.logger.error(f"Error fetching {TABLES[entry_type].name}: {e}")
+        if e.response.status_code == 403:
+            raise ConnectionRefusedError(f"L'accès à {TABLES[entry_type].name} : {entry_id} est "
+                                         f"refusé par Airtable ou la table {TABLES[entry_type].nam} n'existe pas")
+        else:
+            raise ValueError(f"L'entrée {TABLES[entry_type].name} : {entry_id} n'existe pas")
 
 
 def change_status(doc_id: str, status: str) -> str:
