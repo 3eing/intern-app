@@ -12,3 +12,4 @@ python-docx~=1.2.0
 # HTTP integration
 requests~=2.34.2
 
+
