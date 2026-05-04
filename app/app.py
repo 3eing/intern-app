@@ -4,8 +4,8 @@ import os, pathlib, secrets, logging
 from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory
 from werkzeug.utils import secure_filename
 
-from .linepole import settings as kml_settings
-from .linepole.KMLHandler import KMLHandler
+# from .linepole import settings as kml_settings
+# from .linepole.KMLHandler import KMLHandler
 from .eep import eepower_utils as eeu, eep_traitement as eep
 
 from .utils.File import validate_file_epow as validate, get_uploads_files, purge_file, full_paths, \

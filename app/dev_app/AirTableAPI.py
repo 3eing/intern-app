@@ -1,7 +1,8 @@
 from flask import Blueprint, send_from_directory, current_app
 from pyairtable import Api
 from requests.exceptions import HTTPError
-from urllib.request import urlretrieve
+from app.dev_app.tools import _actualise_USD, _clean_project_text
+from app.utils.download import download_file_from_Airtable
 from app.utils.File import render_document
 from pathlib import Path
 import os
@@ -17,7 +18,7 @@ airtable_api = Blueprint('airtable_api', __name__)
 api = Api(API_KEY)
 
 # Get the base ID of the first base (assuming only one base is used)
-BASE_ID = api.bases()[0].id
+BASE_ID = api.bases()[1].id
 
 # Define Airtable tables in a dictionary
 TABLE_NAMES = {
@@ -38,19 +39,20 @@ TABLES = {name: api.table(BASE_ID, table_name) for name, table_name in TABLE_NAM
 # Define the root and generation path for document storage
 ROOT = Path(__file__).parents[2]
 GEN_PATH = ROOT / Path('generated/developpement/doc')
+TEMPLATE_TMP_PATH = ROOT / Path('generated/developpement/templates')
 
 # Enable debug mode for detailed logging
 current_app.debug = True
 
 
-@airtable_api.route("/air/GET/<entry_type>/<id>", methods=['GET', 'POST'])
+@airtable_api.route("/air/GET/<entry_type>/<entry_id>", methods=['GET', 'POST'])
 def get_entry(entry_type: str, entry_id: str) -> dict:
     """
-    Fetch a person's record from the Airtable "Personnes" table.
+    Fetch a record from the Airtable tables.
 
     :param entry_type: The type of entry to get (DOC, PERSON, etc.)
-    :param entry_id: The ID of the person record to retrieve (str).
-    :return: A dictionary containing the person's fields (dict).
+    :param entry_id: The ID of the entry record to retrieve (str).
+    :return: A dictionary containing the entry's fields (dict).
     :raises ValueError: If the person record does not exist or there is a network error.
     """
     try:
@@ -117,7 +119,7 @@ def get_file_list() -> list:
     return file_list
 
 
-def fetch_attributes_of_entry(entry: dict) -> dict:
+def _fetch_attributes_of_entry(entry: dict) -> dict:
     """
     Placeholder function for fetching additional attributes of an Airtable entry.
     This function is currently incomplete.
@@ -158,6 +160,7 @@ def fetch_attributes_of_entry(entry: dict) -> dict:
 
 
 
+
 @airtable_api.route("/air/doc/assemble/<doc_id>", methods=['GET', 'POST'])
 def assemble_doc(doc_id: str):
     """
@@ -169,6 +172,7 @@ def assemble_doc(doc_id: str):
     """
     projects = []
     persons = []
+    compagnies = []
     try:
         # Fetch document metadata
         doc = get_entry("DOC", doc_id)
@@ -181,27 +185,48 @@ def assemble_doc(doc_id: str):
     # Fetch related projects and persons
     try:
         for project_id in doc['Projets']:
-            project = fetch_attributes_of_entry(get_entry("PROJET", project_id))
-            projects.append(project)
+            project = _fetch_attributes_of_entry(get_entry("PROJET", project_id))
+
+            try:
+                project = _actualise_USD(project, attributes_to_actualise=["Valeur",  "Valeur totale"])
+            except ValueError as e:
+                current_app.logger.debug(e)
+
+            projet_structured = _clean_project_text(project)
+
+
+            projects.append(projet_structured)
+
     except Exception as e:
         current_app.logger.error(f"Error fetching project values: {e}")
         change_status(project_id, "Erreur")
         raise ValueError("Une erreur s'est produite lors du rendu de documents :{0}".format(e))
 
-    for person_id in doc['Personnes']:
-        persons.append(get_entry("PERSON", person_id))
+    if "Personnes" in doc.keys():
+        for person_id in doc['Personnes']:
+            persons.append(get_entry("PERSON", person_id))
 
-    # Download template file from the URL provided in the document record
-    template = get_entry("TEMPLATE", doc['Templates'][0])
-    template_file, _ = urlretrieve(template['template'][0]['url'])
-    current_app.logger.debug(f"Template file retrieved: {template_file}")
-
+    template_file = None
     try:
         # Define filename and render the document
         filename = doc['Nom'] + '.docx'
         rendered_doc = GEN_PATH / filename
+
+        try:
+        # Download template file from the URL provided in the document record
+            template = get_entry("TEMPLATE", doc['Templates'][0])
+            template_file = download_file_from_Airtable(template['template'][0]['url'], TEMPLATE_TMP_PATH,
+                                                        suffix=".docx")
+            current_app.logger.debug(f"Template file retrieved: {template_file}")
+
+        except Exception as e:
+            current_app.logger.error(f"Error downloading document: {e}")
+            change_status(doc_id, "Erreur")
+            raise ValueError("Une erreur s'est produite lors du téléchargement de documents :{0}".format(e))
+
+
         current_app.logger.debug(f"Rendering document to: {rendered_doc}")
-        doc_name = Path(render_document(template_file, rendered_doc, projects, persons[0])).name
+        doc_name = Path(render_document(template_file, rendered_doc, projects, persons)).name
 
         # Update document status to "Généré" after successful rendering
         status = change_status(doc_id, "Généré")
@@ -214,3 +239,6 @@ def assemble_doc(doc_id: str):
         current_app.logger.error(f"Error rendering document: {e}")
         change_status(doc_id, "Erreur")
         raise ValueError("Une erreur s'est produite lors du rendu de documents :{0}".format(e))
+    finally:
+        if template_file and Path(template_file).exists():
+            Path(template_file).unlink(missing_ok=True)
