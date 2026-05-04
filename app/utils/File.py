@@ -5,9 +5,17 @@ import os
 import json
 import zipfile
 from pathlib import Path
-from docxtpl import DocxTemplate
+
+from docx.shared import Mm
+from docxtpl import DocxTemplate, InlineImage
 
 from app.eep.eepower_utils import parse_excel_sheet
+from app.utils.download import download_file_from_Airtable
+
+# Define the root and generation path for document storage
+ROOT = Path(__file__).parents[2]
+GEN_PATH = ROOT / Path('generated/developpement/doc')
+TEMPLATE_TMP_PATH = ROOT / Path('generated/developpement/templates')
 
 
 class FileError(Exception):
@@ -236,6 +244,18 @@ def render_document(template_path, doc_path, projects, persons):
     """
     create_dir_if_dont_exist(doc_path.parent)
     doc = DocxTemplate(template_path)
+    for project in projects:
+        try:
+            image_file = download_file_from_Airtable(project['Image'][0]['url'], TEMPLATE_TMP_PATH)
+        except Exception as e:
+            raise ValueError("Une erreur s'est produite lors du téléchargement de l'imagae :{0}".format(e))
+
+        if image_file:
+            project["Image"] = InlineImage(doc, str(image_file), width=Mm(70))
+        else:
+            project["Image"] = ""
+
+
     context = {'projects': projects, 'person': persons}
     set_of_variables = doc.get_undeclared_template_variables()
     doc.render(context)
