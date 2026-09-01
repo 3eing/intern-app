@@ -72,8 +72,8 @@ def create_app():
             # ajout de fichier pour analyse
             if request.form['btn_id'] == 'soumettre_fichier':
                 error_messages = []
-                submittted_files = request.files.getlist('file')
-                for uploaded_file in submittted_files:
+                submitted_files = request.files.getlist('file')
+                for uploaded_file in submitted_files:
                     file = pathlib.Path(secure_filename(uploaded_file.filename))
                     if file.name != '':
                         # valide si l'extension des fichiers est bonne

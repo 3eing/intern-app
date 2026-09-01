@@ -1,7 +1,7 @@
-from app import app
+from apps.web import create_app
 
 
-intern_app = app.create_app()
+intern_app = create_app()
 
 
 if __name__ == "__main__":

@@ -10,7 +10,7 @@ from docx.shared import Mm
 from docxtpl import DocxTemplate, InlineImage
 
 from app.eep.eepower_utils import parse_excel_sheet
-from app.utils.download import download_file_from_Airtable
+from modules.dev_docs.infrastructure.download import download_file_from_Airtable
 
 # Define the root and generation path for document storage
 ROOT = Path(__file__).parents[2]
@@ -20,15 +20,6 @@ TEMPLATE_TMP_PATH = ROOT / Path('generated/developpement/templates')
 
 class FileError(Exception):
     pass
-
-
-def get_uploads_files(upload_dir=r'.\uploads'):
-    upload_dir = Path(upload_dir)
-    if upload_dir.exists() and upload_dir.is_dir():
-        return [child for child in upload_dir.iterdir()]
-    else:
-        print("Directory ", upload_dir.name, " doesn't exist")
-        return []
 
 
 def purge_file(dir_name=Path(r'.\uploads')):
