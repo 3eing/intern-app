@@ -43,7 +43,10 @@ def ensure_storage_dirs(app: Flask) -> None:
 
 def register_blueprints(app: Flask) -> None:
     from apps.web.routes import web_bp
+    from modules.eepower.presentation.blueprint import eepower_bp
+
     app.register_blueprint(web_bp)
+    app.register_blueprint(eepower_bp)
 
 
 def create_app() -> Flask:

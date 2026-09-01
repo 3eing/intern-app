@@ -55,7 +55,7 @@ def _guess_suffix(url: str, response: requests.Response, suffix: str | None) -> 
     return ".bin"
 
 
-def download_file_from_Airtable(url: str, target_dir: Path, suffix: str | None = None) -> Path:
+def download_file_from_airtable(url: str, target_dir: Path, suffix: str | None = None) -> Path:
     target_dir.mkdir(parents=True, exist_ok=True)
 
     try:
