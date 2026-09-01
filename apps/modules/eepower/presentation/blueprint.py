@@ -17,7 +17,13 @@ from app.eep import eepower_utils as eeu, eep_traitement as eep
 EEP_SESSION_KEY = "eepower"
 
 
-eepower_bp = Blueprint("eepower", __name__)
+eepower_bp = Blueprint(
+    "eepower",
+    __name__,
+    template_folder="templates",
+    static_folder="static",
+    static_url_path="/eepower/static",
+)
 
 
 def _paths():
@@ -116,7 +122,7 @@ def eepower():
         elif request.form['btn_id'] == 'suivant':
             return redirect(url_for('.eepower_traitement'))
 
-    return render_template('easy_power.html', uploaded_files=uploaded_files)
+    return render_template('eepower/easy_power.html', uploaded_files=uploaded_files)
 
 
 @eepower_bp.route('/eepower-2', methods=['GET', 'POST'])
@@ -134,7 +140,7 @@ def eepower_traitement():
             if request.form['bus'] != '':
                 add_to_list_file(_buses_file(), str.upper(request.form['bus']))
                 eep_data["BUS_EXCLUS"] = get_items_from_file(_buses_file())
-                render_template('easy_power_traitement.html', nb_scen=eep_data["NB_SCEN"],
+                render_template('eepower/easy_power_traitement.html', nb_scen=eep_data["NB_SCEN"],
                                 bus_exclus=eep_data["BUS_EXCLUS"],
                                 file_ready=1)
 
@@ -143,7 +149,7 @@ def eepower_traitement():
                 dirpath = _generated_dir()
             except FileNotFoundError:
                 flash("Problème lors de la création du répertoire", 'error')
-                return render_template('easy_power_traitement.html', nb_scen=eep_data["NB_SCEN"],
+                return render_template('eepower/easy_power_traitement.html', nb_scen=eep_data["NB_SCEN"],
                                        bus_exclus=eep_data["BUS_EXCLUS"],
                                        file_ready=file_ready)
             try:
@@ -158,18 +164,18 @@ def eepower_traitement():
                     file_list += eep.report_tcc(eep_data, dirpath)
                 if not file_list:
                     flash("Pas de fichiers fournis", 'error')
-                    return render_template('easy_power_traitement.html', nb_scen=eep_data["NB_SCEN"],
+                    return render_template('eepower/easy_power_traitement.html', nb_scen=eep_data["NB_SCEN"],
                                            bus_exclus=eep_data["BUS_EXCLUS"],
                                            file_ready=file_ready)
                 _set_output_filename(zip_files(file_list, zip_file_name=app_name + '_result'))
 
             except FileNotFoundError as e:
                 flash(e, 'error')
-                return render_template('easy_power_traitement.html', nb_scen=eep_data["NB_SCEN"],
+                return render_template('eepower/easy_power_traitement.html', nb_scen=eep_data["NB_SCEN"],
                                        bus_exclus=eep_data["BUS_EXCLUS"],
                                        file_ready=file_ready)
 
-            return render_template('easy_power_traitement.html', nb_scen=eep_data["NB_SCEN"],
+            return render_template('eepower/easy_power_traitement.html', nb_scen=eep_data["NB_SCEN"],
                                    bus_exclus=eep_data["BUS_EXCLUS"],
                                    file_ready=1)
 
@@ -186,7 +192,7 @@ def eepower_traitement():
         elif request.form['btn_id'] == 'terminer':
             return redirect(url_for('.purge'))
 
-    return render_template('easy_power_traitement.html', nb_scen=eep_data["NB_SCEN"], bus_exclus=eep_data["BUS_EXCLUS"],
+    return render_template('eepower/easy_power_traitement.html', nb_scen=eep_data["NB_SCEN"], bus_exclus=eep_data["BUS_EXCLUS"],
                            file_ready=file_ready)
 
 
@@ -201,6 +207,7 @@ def download():
 
 
 @eepower_bp.get('/eepower/purge')
+@eepower_bp.post('/eepower/purge')
 def purge():
     purge_file(_upload_dir())
     purge_file(_generated_dir())
