@@ -7,10 +7,8 @@
 <body>
     <nav id="barre-nav">
         <ul>
-            <li><a href="/">Accueil</a> </li>
-            <li><a href="/eepower">Easy EasyPower</a> </li>
-
-            <li><a href="/linepole_generator">Générateur de poteaux électriques</a> </li>
+            <li><a href="{{ url_for('web.index') }}">Accueil</a></li>
+            <li><a href="{{ url_for('eepower.eepower') }}">Easy EasyPower</a> </li>
 
         </ul>
 

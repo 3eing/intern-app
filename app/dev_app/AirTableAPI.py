@@ -2,7 +2,7 @@ from flask import Blueprint, send_from_directory, current_app
 from pyairtable import Api
 from requests.exceptions import HTTPError
 from app.dev_app.tools import _actualise_USD, _clean_project_text
-from modules.dev_docs.infrastructure.download import download_file_from_Airtable
+from modules.dev_docs.infrastructure.download import download_file_from_airtable
 from app.utils.File import render_document
 from pathlib import Path
 import os
