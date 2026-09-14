@@ -9,7 +9,8 @@ defusedxml~=0.7.1
 docxtpl~=0.20.2
 python-docx~=1.2.0
 
-# HTTP integration
+# HTTP and Airtable integration
 requests~=2.34.2
+#pyairtable~=2.3.7
 
 
