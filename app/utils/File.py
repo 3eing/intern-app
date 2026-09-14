@@ -9,7 +9,7 @@ from pathlib import Path
 from docx.shared import Mm
 from docxtpl import DocxTemplate, InlineImage
 
-from app.eep.eepower_utils import parse_excel_sheet
+from modules.eepower.infrastructure.parsers import parse_excel_sheet
 
 # Define the root and generation path for document storage
 ROOT = Path(__file__).parents[2]
