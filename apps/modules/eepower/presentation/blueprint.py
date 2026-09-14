@@ -9,9 +9,11 @@ from modules.shared.infrastructure.filesystem import (
     purge_file,
     zip_files,
 )
-from app.utils.File import add_to_list_file, get_items_from_file, validate_file_epow
+from app.utils.File import add_to_list_file, get_items_from_file
+from modules.eepower.application.process_reports import generate_reports
+from modules.eepower.domain.services import scenario_finder
+from modules.eepower.infrastructure.file_validation import validate_file_epow
 from modules.shared.infrastructure.error_handlers import FileError
-from app.eep import eepower_utils as eeu, eep_traitement as eep
 
 
 EEP_SESSION_KEY = "eepower"
@@ -78,7 +80,7 @@ def _output_filename() -> str | None:
 def _build_eep_data() -> dict:
     """Build request-specific data; only small user state lives in the session."""
     files = get_uploads_files(_upload_dir())
-    scenarios = eeu.scenario_finder(files)
+    scenarios = scenario_finder(files)
     return {
         "BUS_EXCLUS": get_items_from_file(_buses_file()),
         "FILE_PATHS": _upload_dir() / "*",
@@ -153,15 +155,7 @@ def eepower_traitement():
                                        bus_exclus=eep_data["BUS_EXCLUS"],
                                        file_ready=file_ready)
             try:
-                file_list = []
-                if "CC" in eep_data["REPORT_TYPE"]:
-                    file_list += eep.report_cc(eep_data, dirpath)
-                if "AF" in eep_data["REPORT_TYPE"]:
-                    file_list += eep.report_af(eep_data, dirpath)
-                if "ED" in eep_data["REPORT_TYPE"]:
-                    file_list += eep.report_ed(eep_data, dirpath)
-                if "TCC" in eep_data["REPORT_TYPE"]:
-                    file_list += eep.report_tcc(eep_data, dirpath)
+                file_list = generate_reports(eep_data, dirpath)
                 if not file_list:
                     flash("Pas de fichiers fournis", 'error')
                     return render_template('eepower/easy_power_traitement.html', nb_scen=eep_data["NB_SCEN"],
