@@ -1,8 +1,17 @@
-FROM python:3.14-alpine
+FROM python:3.14-slim
 LABEL authors="Loup Letac, ing - 3E ing"
 
-ADD main.py .
+WORKDIR /intern-app
+ENV PYTHONPATH=/intern-app/apps \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    FLASK_ENV=debug
 
-RUN pip install -r requirements.txt
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt "gunicorn>=23,<24"
 
-CMD ["python", "./main.py"]
+COPY . .
+
+EXPOSE 8080
+
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--access-logfile", "-", "--error-logfile", "-", "main:intern_app"]
