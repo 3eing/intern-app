@@ -243,20 +243,19 @@ def df_to_tabularay(df, filepath, type='cc'):
         df = df.droplevel(0, axis=1)
 
     styled_df = df.fillna(' ').style \
-        .format_index("\\textbf{{{}}}", escape="latex") \
-        .format(precision=1, escape="latex")
+        .format_index(escape="latex") \
+        .format(precision=0, escape="latex")
 
     if type not in ("fuse", "electronique", "magnetothermique"):
         styled_df.format(precision=0, subset=["Bus (V)"])
 
-    if type == "af":
-        styled_df.format("\\colorcell{{{}}}", subset=["Niveau d'énergie (Cal/cm²)"])
     latex_df = styled_df.to_latex()
     match = search(r"(?<=\\)(\n.+)+(?=\\\\\n\\end)", latex_df)
     isolated_table = match.group()
 
-    header = TEX_REF[type]['header']
-    footer = TEX_REF[type]['footer']
+    header = f"""\\begin{{{TEX_REF[type]["class"]}}}[\ncaption={{{TEX_REF[type]["caption"]}}},
+        \tlabel={{tab:{TEX_REF[type]["label"]}}}]"""
+    footer = f"""\n\end{{{TEX_REF[type]["class"]}}}"""
 
     table = header + isolated_table + footer
 
