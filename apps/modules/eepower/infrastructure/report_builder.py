@@ -255,7 +255,7 @@ def df_to_tabularay(df, filepath, type='cc'):
 
     header = f"""\\begin{{{TEX_REF[type]["class"]}}}[\ncaption={{{TEX_REF[type]["caption"]}}},
         \tlabel={{tab:{TEX_REF[type]["label"]}}}]"""
-    footer = f"""\n\end{{{TEX_REF[type]["class"]}}}"""
+    footer = f"""\n\\end{{{TEX_REF[type]["class"]}}}"""
 
     table = header + isolated_table + footer
 
