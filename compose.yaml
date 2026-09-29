@@ -1,13 +1,13 @@
 services:
   intern-app:
-    build:
-      context: .
+    image: intern-app:local
+    pull_policy: build
     restart: unless-stopped
     ports:
       - "${APP_PORT:-8080}:8080"
     environment:
       FLASK_ENV: prod
-      SECRET_KEY: ${SECRET_KEY:?Definir SECRET_KEY dans le fichier .env}
+      SECRET_KEY: ${SECRET_KEY:?Definir SECRET_KEY dans Portainer}
     volumes:
       - uploads:/intern-app/apps/uploads
       - generated:/intern-app/apps/generated
