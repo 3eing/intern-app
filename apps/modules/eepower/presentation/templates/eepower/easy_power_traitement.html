@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}EasyPower — Traitement{% endblock %}
+
+{% block content %}
+  <section id="validation_scenario">
+    <h1>Configuration du rapport</h1>
+    <p>L’étude comporte <strong>{{ nb_scen }}</strong> scénario{% if nb_scen != 1 %}s{% endif %}.</p>
+  </section>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <section id="message" aria-live="polite">
+        <ul class="flashes">
+          {% for category, message in messages %}
+            <li class="flash-{{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      </section>
+    {% endif %}
+  {% endwith %}
+
+  <section id="bus">
+    <h2>Bus à exclure</h2>
+    <p>Ajoutez un motif à exclure, par exemple <code>-SEC$</code> ou <code>-PRIM$</code>.</p>
+    <div id="exemple_bus">
+      <img src="{{ url_for('eepower.static', filename='img/bus_transfo.png') }}" alt="Exemple de bus de transformateur">
+      <img src="{{ url_for('eepower.static', filename='img/fusible.png') }}" alt="Exemple de bus de fusible">
+    </div>
+
+    <form method="post" action="{{ url_for('eepower.eepower_traitement') }}">
+      <label for="bus">Motif de bus</label>
+      <input type="text" name="bus" id="bus" placeholder="Ex. : -sec" maxlength="80">
+      <input type="hidden" name="btn_id" value="ajouter_bus">
+      <button type="submit">Ajouter</button>
+    </form>
+
+    {% if bus_exclus %}
+      <h3>Motifs exclus</h3>
+      <ul id="list_bus_exclus">
+        {% for bus in bus_exclus %}
+          <li>{{ bus }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </section>
+
+  <section id="actions">
+    <form method="post" action="{{ url_for('eepower.eepower_traitement') }}">
+      <input type="hidden" name="btn_id" value="suivant">
+      <button type="submit">Générer les rapports</button>
+    </form>
+
+    <form method="post" action="{{ url_for('eepower.eepower_traitement') }}">
+      <input type="hidden" name="btn_id" value="retour">
+      <button type="submit">Retour</button>
+    </form>
+
+    {% if file_ready %}
+      <p>Le fichier est prêt.</p>
+      <a href="{{ url_for('eepower.download') }}">Télécharger le ZIP</a>
+      <form method="post" action="{{ url_for('eepower.purge') }}">
+        <button type="submit">Terminer et purger</button>
+      </form>
+    {% endif %}
+  </section>
+{% endblock %}

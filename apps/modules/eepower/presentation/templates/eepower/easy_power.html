@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}EasyPower — Outils internes{% endblock %}
+
+{% block content %}
+  <section id="intro">
+    <h1>Rapports EasyPower</h1>
+    <p>Importez les rapports générés par EasyPower pour préparer automatiquement les documents de sortie.</p>
+    <p>Fichiers pris en charge : <code>.csv</code>, <code>.xlsx</code> et <code>.xls</code>.</p>
+  </section>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <section id="message" aria-live="polite">
+        <ul class="flashes">
+          {% for category, message in messages %}
+            <li class="flash-{{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      </section>
+    {% endif %}
+  {% endwith %}
+
+  <section id="file_selector">
+    <form method="post" action="{{ url_for('eepower.eepower') }}" enctype="multipart/form-data">
+      <label for="file">Fichiers EasyPower</label>
+      <input id="file" type="file" name="file" multiple accept=".csv,.xlsx,.xls" required>
+      <input type="hidden" name="btn_id" value="soumettre_fichier">
+      <button type="submit">Téléverser</button>
+    </form>
+  </section>
+
+  <section id="files">
+    {% if uploaded_files %}
+      <h2>Fichiers téléversés</h2>
+      <ul>
+        {% for file in uploaded_files %}
+          <li>{{ file.name }}</li>
+        {% endfor %}
+      </ul>
+
+      <form method="post" action="{{ url_for('eepower.purge') }}">
+        <button type="submit">Purger les fichiers</button>
+      </form>
+
+      <form method="post" action="{{ url_for('eepower.eepower') }}">
+        <input type="hidden" name="btn_id" value="suivant">
+        <button type="submit">Suivant</button>
+      </form>
+    {% else %}
+      <p>Aucun fichier téléversé.</p>
+    {% endif %}
+  </section>
+{% endblock %}
