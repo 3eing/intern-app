@@ -197,9 +197,9 @@ def report_cc(data, target_rep):
                 file1 = file
             elif 'HV' in file.name:
                 hv = file
-            if '.csv' in file.suffix:
+            if file.suffix.lower() == '.csv':
                 _type = 'csv'
-            elif '.xls' in file.suffix:
+            elif file.suffix.lower() == '.xlsx':
                 _type = 'xlsx'
 
         if not _type:

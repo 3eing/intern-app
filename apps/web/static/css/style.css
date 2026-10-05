@@ -178,3 +178,17 @@ input,
  fieldset {
    padding: 20px 40px;
  }
+
+/* Tableau des fichiers EasyPower */
+#file-help {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#file-help th,
+#file-help td {
+    border: 1px solid #999;
+    padding: 10px 12px;
+    text-align: left;
+    vertical-align: top;
+}
