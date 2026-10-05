@@ -192,3 +192,21 @@ input,
     text-align: left;
     vertical-align: top;
 }
+
+#file-help .upload-results {
+    overflow-wrap: anywhere;
+}
+
+#file-help .upload-result + .upload-result {
+    border-top: 1px solid #ccc;
+    margin-top: 8px;
+    padding-top: 8px;
+}
+
+#file-help .upload-error {
+    color: #a12622;
+}
+
+#file-help .upload-success {
+    color: #216438;
+}

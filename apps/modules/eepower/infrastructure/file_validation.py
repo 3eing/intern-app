@@ -26,6 +26,12 @@ REPORT_FORMATS = {
 }
 
 
+def identify_report_type(file: str | Path) -> str | None:
+    """Identify the report even when its extension or scenario is invalid."""
+    return next((kind for kind, pattern in REPORT_PATTERNS.items()
+                 if re.match(pattern, Path(file).name)), None)
+
+
 def validate_report_filename(file: str | Path) -> str:
     file = Path(file)
     if file.suffix.lower() not in {".csv", ".xlsx"}:
