@@ -5,8 +5,33 @@
 {% block content %}
   <section id="intro">
     <h1>Rapports EasyPower</h1>
-    <p>Importez les rapports générés par EasyPower pour préparer automatiquement les documents de sortie.</p>
-    <p>Fichiers pris en charge : <code>.csv</code>, <code>.xlsx</code> et <code>.xls</code>.</p>
+    {% set filename_examples = {
+      'AF': 'Arc_Flash_Scenario_Report.xlsx',
+      'ED': 'Equipment_Duty_Report.xlsx',
+      'TCC': 'TCC_Coordination_Report.xlsx'
+    } %}
+    <table id="file-help">
+      <thead>
+        <tr><th scope="col">Rapport</th><th scope="col">Format</th><th scope="col">Nom de fichier</th></tr>
+      </thead>
+      <tbody>
+        {% for report_type, specification in report_formats.items() %}
+          <tr>
+            <th scope="row">{{ specification[0] }}</th>
+            <td>{{ specification[1] | join(' ou ') }}</td>
+            <td>
+              {% if report_type == 'CC' %}
+                <code>LV_Momentary_scen_1.csv</code><br>
+                <code>30_Cycle_Report_scen_1.xlsx</code><br>
+                <small>Suffixe _scen_N obligatoire ; même numéro pour les rapports associés.</small>
+              {% else %}
+                <code>{{ filename_examples[report_type] }}</code>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </section>
 
   {% with messages = get_flashed_messages(with_categories=true) %}
@@ -24,7 +49,7 @@
   <section id="file_selector">
     <form method="post" action="{{ url_for('eepower.eepower') }}" enctype="multipart/form-data">
       <label for="file">Fichiers EasyPower</label>
-      <input id="file" type="file" name="file" multiple accept=".csv,.xlsx,.xls" required>
+      <input id="file" type="file" name="file" multiple accept=".csv,.xlsx" aria-describedby="file-help" required>
       <input type="hidden" name="btn_id" value="soumettre_fichier">
       <button type="submit">Téléverser</button>
     </form>

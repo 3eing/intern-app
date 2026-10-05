@@ -4,11 +4,11 @@ from pathlib import Path
 import pandas as pd
 
 
-SCENARIO_PATTERN = r"(?i)(lv|lm|hv|30_cycle_report).+(scen\D*)(\s*_*-*)(\d+\w{0,1})"
+SCENARIO_PATTERN = r"(?i)(?:lv|lm|hv|30[ _-]cycle).*?[ _-]scen(?:ario)?[ _-]*([0-9]+[a-z]?)\Z"
 
 
 def scenario_number(file: Path) -> str | None:
-    match = re.search(SCENARIO_PATTERN, file.name)
+    match = re.search(SCENARIO_PATTERN, file.stem)
     return match.groups()[-1] if match else None
 
 

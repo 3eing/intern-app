@@ -1,5 +1,6 @@
 from pathlib import Path
 from uuid import uuid4
+from tempfile import TemporaryDirectory
 from flask import Blueprint, current_app, flash, redirect, render_template, request, send_from_directory, session, url_for
 from werkzeug.utils import secure_filename
 
@@ -12,7 +13,7 @@ from modules.shared.infrastructure.filesystem import (
 from app.utils.File import add_to_list_file, get_items_from_file
 from modules.eepower.application.process_reports import generate_reports
 from modules.eepower.domain.services import scenario_finder
-from modules.eepower.infrastructure.file_validation import validate_file_epow
+from modules.eepower.infrastructure.file_validation import REPORT_FORMATS, validate_file_epow, validate_report_filename
 from modules.shared.infrastructure.error_handlers import FileError
 
 
@@ -97,25 +98,35 @@ def eepower():
     if request.method == 'POST':
         # ajout de fichier pour analyse
         if request.form['btn_id'] == 'soumettre_fichier':
-            error_messages = []
-            submitted_files = request.files.getlist('file')
+            submitted_files = [f for f in request.files.getlist('file') if f.filename]
+            if not submitted_files:
+                flash("Sélectionnez au moins un fichier à envoyer.", "warning")
             for uploaded_file in submitted_files:
-                file = Path(secure_filename(uploaded_file.filename))
-                if file.name != '':
-                    # valide si l'extension des fichiers est bonne
-                    if file.suffix not in current_app.config["UPLOAD_EXTENSIONS"]:
-                        flash("Les fichiers reçus ne sont des fichiers .csv ou .xlsx", 'error')
-                    path_to_file = _upload_dir() / file
-                    uploaded_file.save(path_to_file)
-                    # valide en ouvrant les fichiers si le contenu est bon
-                    try:
+                filename = secure_filename(uploaded_file.filename)
+                if not filename:
+                    flash("Nom de fichier invalide.", "error")
+                    continue
+                try:
+                    validate_report_filename(filename)
+                    upload_dir = _upload_dir()
+                    # Stage outside the directory containing accepted files.
+                    with TemporaryDirectory(prefix=".eepower-", dir=upload_dir.parent) as staging:
+                        staged_file = Path(staging) / filename
+                        uploaded_file.save(staged_file)
+                        report_type = validate_file_epow(staged_file)
+                        staged_file.replace(upload_dir / filename)
+                    _add_report_type(report_type)
+                except FileError as error:
+                    flash(str(error), "error")
+                except OSError:
+                    current_app.logger.exception("Échec de stockage du fichier %s", filename)
+                    flash(f"Impossible de lire ou d'enregistrer '{filename}'. Réessayez ou contactez l'administrateur.", "error")
+                except Exception:
+                    current_app.logger.exception("Erreur inattendue pendant l'import de %s", filename)
+                    flash(f"Erreur interne pendant l'import de '{filename}'. Contactez l'administrateur.", "error")
+                else:
+                    flash(f"'{filename}' : fichier accepté.", "success")
 
-                        _add_report_type(validate_file_epow(path_to_file))
-                    except FileError as e:
-                        Path.unlink(path_to_file)
-                        error_messages.append("{0}".format(e))
-
-            flash("\n".join(error_messages), 'warning')
             return redirect(url_for('.eepower'))
 
         elif request.form['btn_id'] == 'purger':
@@ -124,7 +135,7 @@ def eepower():
         elif request.form['btn_id'] == 'suivant':
             return redirect(url_for('.eepower_traitement'))
 
-    return render_template('eepower/easy_power.html', uploaded_files=uploaded_files)
+    return render_template('eepower/easy_power.html', uploaded_files=uploaded_files, report_formats=REPORT_FORMATS)
 
 
 @eepower_bp.route('/eepower-2', methods=['GET', 'POST'])

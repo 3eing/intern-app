@@ -4,7 +4,7 @@ import re
 import numpy as np
 from pathlib import Path
 
-SCEN_PATERN = r"(?i)(lv|lm|hv|30_cycle_report).+(scen\D*)(\s*_*-*)(\d+\w{0,1})"
+from modules.eepower.domain.services import scenario_number
 
 
 def parse_excel_sheet(file, sheet_name=0, header=0):
@@ -13,14 +13,18 @@ def parse_excel_sheet(file, sheet_name=0, header=0):
     where dfs is a list of data frames and df_mds their potential associated metadata
     from https://stackoverflow.com/questions/43367805/pandas-read-excel-multiple-tables-on-the-same-sheet
     """
-    xl = pd.ExcelFile(file)
+    xl = pd.ExcelFile(file, engine="openpyxl")
     try:
         entire_sheet = xl.parse(sheet_name=sheet_name)
 
+        if 'TCC Coordination Report' not in entire_sheet.columns:
+            raise ValueError("Colonne 'TCC Coordination Report' manquante.")
         lines = np.logical_not(entire_sheet['TCC Coordination Report'].isnull())
         starts = []
         ends = []
         for line, value in lines.items():
+            previous_value = False
+            next_value = False
             if line != 0:
                 previous_value = lines[line-1]
             if line != len(lines) - 1:
@@ -33,7 +37,7 @@ def parse_excel_sheet(file, sheet_name=0, header=0):
                 ends.append(line)
 
         if len(starts) < len(ends) or len(starts) > len(ends)+1:
-            raise BaseException('Could not detect equal number of beginnings and ends')
+            raise ValueError('Structure des tableaux TCC invalide.')
 
         # make data frames
         dfs = []
@@ -47,14 +51,9 @@ def parse_excel_sheet(file, sheet_name=0, header=0):
                 stop = int(entire_sheet.shape[0])
             df = xl.parse(sheet_name=sheet_name, skiprows=start, nrows=stop-start, header=header)
             dfs.append(df)
-        xl.close()
         return dfs
-    except BaseException as e:
+    finally:
         xl.close()
-        raise e
-    except Exception as e:
-        xl.close()
-        raise e
 
 
 def simple_tcc_reports(rap_tcc, bus_excluded=None):
@@ -230,7 +229,7 @@ def simple_af_report(rap_af, bus_excluded=None):
         "Incident Energy\n(cal/cm2)": "Niveau d'énergie (Cal/cm²)"
     }
     file_path = Path(rap_af)
-    typefile = file_path.suffix
+    typefile = file_path.suffix.lower()
     if typefile == '.csv':
         rapport = pd.DataFrame(pd.read_csv(rap_af, index_col=0))
     elif typefile == '.xlsx':
@@ -270,12 +269,13 @@ def simple_cc_report(rap_30, rap_1, hv=None, typefile='csv', bus_excluded=None):
     """
     bus_excluded = [str.upper(bus) for bus in bus_excluded]
     #ajouté pour être sûr de dropper les lignes voulues (easypower donne des noms en capitale)
-    if typefile == 'csv':
-        rapport_30cycles = pd.DataFrame(pd.read_csv(rap_30, skiprows=1, index_col=0))
-        rapport_1cycle = pd.DataFrame(pd.read_csv(rap_1, skiprows=1, index_col=0))
-    elif typefile == 'xlsx':
-        rapport_30cycles = pd.DataFrame(pd.read_excel(rap_30, skiprows=7, index_col=0, engine='openpyxl'))
-        rapport_1cycle = pd.DataFrame(pd.read_excel(rap_1, skiprows=7, index_col=0, engine='openpyxl'))
+    def read_cc(file):
+        if Path(file).suffix.lower() == '.csv':
+            return pd.read_csv(file, skiprows=1, index_col=0)
+        return pd.read_excel(file, skiprows=7, index_col=0, engine='openpyxl')
+
+    rapport_30cycles = read_cc(rap_30)
+    rapport_1cycle = read_cc(rap_1)
 
     if bus_excluded != None and bus_excluded != []:
         temp1 = rapport_1cycle[~rapport_1cycle.index.str.contains('|'.join(bus_excluded))]
@@ -332,11 +332,7 @@ def group_by_scenario(file_list, scenario):
 
 
 def scen_num_finder(file):
-    m = re.search(SCEN_PATERN, file.name)
-    if m:
-        return m.groups()[-1]
-    else:
-        return None
+    return scenario_number(Path(file))
 
 
 def scenario_finder(file_names):
