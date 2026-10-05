@@ -1,7 +1,7 @@
 from pathlib import Path
 from uuid import uuid4
 from tempfile import TemporaryDirectory
-from flask import Blueprint, current_app, flash, redirect, render_template, request, send_from_directory, session, url_for
+from flask import Blueprint, current_app, flash, get_flashed_messages, redirect, render_template, request, send_from_directory, session, url_for
 from werkzeug.utils import secure_filename
 
 from modules.shared.infrastructure.filesystem import (
@@ -13,7 +13,7 @@ from modules.shared.infrastructure.filesystem import (
 from app.utils.File import add_to_list_file, get_items_from_file
 from modules.eepower.application.process_reports import generate_reports
 from modules.eepower.domain.services import scenario_finder
-from modules.eepower.infrastructure.file_validation import REPORT_FORMATS, validate_file_epow, validate_report_filename
+from modules.eepower.infrastructure.file_validation import REPORT_FORMATS, identify_report_type, validate_file_epow, validate_report_filename
 from modules.shared.infrastructure.error_handlers import FileError
 
 
@@ -92,6 +92,14 @@ def _build_eep_data() -> dict:
     }
 
 
+def _flash_upload_error(filename: str, message: str) -> None:
+    report_type = identify_report_type(filename)
+    if report_type is None:
+        flash(message, "error")
+    else:
+        flash({"report_type": report_type, "filename": filename, "error": message}, "upload_error")
+
+
 @eepower_bp.route('/eepower', methods=['GET', 'POST'])
 def eepower():
     uploaded_files = get_uploads_files(_upload_dir())
@@ -117,15 +125,13 @@ def eepower():
                         staged_file.replace(upload_dir / filename)
                     _add_report_type(report_type)
                 except FileError as error:
-                    flash(str(error), "error")
+                    _flash_upload_error(filename, str(error))
                 except OSError:
                     current_app.logger.exception("Échec de stockage du fichier %s", filename)
-                    flash(f"Impossible de lire ou d'enregistrer '{filename}'. Réessayez ou contactez l'administrateur.", "error")
+                    _flash_upload_error(filename, f"Impossible de lire ou d'enregistrer '{filename}'. Réessayez ou contactez l'administrateur.")
                 except Exception:
                     current_app.logger.exception("Erreur inattendue pendant l'import de %s", filename)
-                    flash(f"Erreur interne pendant l'import de '{filename}'. Contactez l'administrateur.", "error")
-                else:
-                    flash(f"'{filename}' : fichier accepté.", "success")
+                    _flash_upload_error(filename, f"Erreur interne pendant l'import de '{filename}'. Contactez l'administrateur.")
 
             return redirect(url_for('.eepower'))
 
@@ -135,7 +141,19 @@ def eepower():
         elif request.form['btn_id'] == 'suivant':
             return redirect(url_for('.eepower_traitement'))
 
-    return render_template('eepower/easy_power.html', uploaded_files=uploaded_files, report_formats=REPORT_FORMATS)
+    report_files = {kind: [] for kind in REPORT_FORMATS}
+    for file in uploaded_files:
+        report_type = identify_report_type(file)
+        if report_type is not None:
+            report_files[report_type].append({"filename": file.name, "error": None})
+    messages = []
+    for category, message in get_flashed_messages(with_categories=True):
+        if category == "upload_error":
+            report_files[message["report_type"]].append(message)
+        else:
+            messages.append((category, message))
+    return render_template('eepower/easy_power.html', uploaded_files=uploaded_files,
+                           report_formats=REPORT_FORMATS, report_files=report_files, messages=messages)
 
 
 @eepower_bp.route('/eepower-2', methods=['GET', 'POST'])

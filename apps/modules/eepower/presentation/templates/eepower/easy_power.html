@@ -12,7 +12,7 @@
     } %}
     <table id="file-help">
       <thead>
-        <tr><th scope="col">Rapport</th><th scope="col">Format</th><th scope="col">Nom de fichier</th></tr>
+        <tr><th scope="col">Rapport</th><th scope="col">Format</th><th scope="col">Nom de fichier</th><th scope="col">Fichiers ajoutés</th></tr>
       </thead>
       <tbody>
         {% for report_type, specification in report_formats.items() %}
@@ -28,13 +28,26 @@
                 <code>{{ filename_examples[report_type] }}</code>
               {% endif %}
             </td>
+            <td class="upload-results" data-report="{{ report_type }}" aria-live="polite">
+              {% for result in report_files[report_type] %}
+                <div class="upload-result {{ 'upload-error' if result.error else 'upload-success' }}">
+                  {% if result.error %}
+                    <strong>Refusé — {{ result.filename }}</strong><br>
+                    {{ result.error }}
+                  {% else %}
+                    <strong>Ajouté</strong> — {{ result.filename }}
+                  {% endif %}
+                </div>
+              {% else %}
+                —
+              {% endfor %}
+            </td>
           </tr>
         {% endfor %}
       </tbody>
     </table>
   </section>
 
-  {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
       <section id="message" aria-live="polite">
         <ul class="flashes">
@@ -44,7 +57,6 @@
         </ul>
       </section>
     {% endif %}
-  {% endwith %}
 
   <section id="file_selector">
     <form method="post" action="{{ url_for('eepower.eepower') }}" enctype="multipart/form-data">
@@ -57,13 +69,6 @@
 
   <section id="files">
     {% if uploaded_files %}
-      <h2>Fichiers téléversés</h2>
-      <ul>
-        {% for file in uploaded_files %}
-          <li>{{ file.name }}</li>
-        {% endfor %}
-      </ul>
-
       <form method="post" action="{{ url_for('eepower.purge') }}">
         <button type="submit">Purger les fichiers</button>
       </form>
