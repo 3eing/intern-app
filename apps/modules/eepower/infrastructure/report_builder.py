@@ -249,6 +249,10 @@ def df_to_tabularay(df, filepath, type='cc'):
     if type not in ("fuse", "electronique", "magnetothermique"):
         styled_df.format(precision=0, subset=["Bus (V)"])
 
+    if type == 'cc':
+        styled_df.format(precision=1, subset=["X/R Ratio"])
+
+
     latex_df = styled_df.to_latex()
     match = search(r"(?<=\\)(\n.+)+(?=\\\\\n\\end)", latex_df)
     isolated_table = match.group()

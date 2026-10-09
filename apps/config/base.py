@@ -10,3 +10,4 @@ UPLOAD_EXTENSIONS = [".csv", ".xlsx", ".xls"]
 ROOT_DIR = BASE_DIR
 UPLOAD_PATH = ROOT_DIR / "uploads"
 GENERATED_PATH = ROOT_DIR / "generated"
+
