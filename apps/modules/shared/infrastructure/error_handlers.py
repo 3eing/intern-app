@@ -1,4 +1,0 @@
-
-
-class FileError(Exception):
-    pass

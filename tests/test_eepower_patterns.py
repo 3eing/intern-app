@@ -1,4 +1,3 @@
-import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -6,8 +5,6 @@ from types import SimpleNamespace
 
 from flask import Flask
 from jinja2 import ChoiceLoader, DictLoader
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'apps'))
 
 from modules.eepower.presentation.blueprint import eepower_bp
 

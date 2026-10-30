@@ -2,8 +2,7 @@ FROM python:3.14-slim
 LABEL authors="Loup Letac, ing - 3E ing"
 
 WORKDIR /intern-app
-ENV PYTHONPATH=/intern-app/apps \
-    PYTHONDONTWRITEBYTECODE=1 \
+ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     FLASK_ENV=debug
 

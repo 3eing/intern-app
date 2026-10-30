@@ -1,6 +1,5 @@
 import io
 import re
-import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -10,8 +9,6 @@ from unittest.mock import patch
 import pandas as pd
 from flask import Flask
 from jinja2 import ChoiceLoader, DictLoader
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'apps'))
 
 from modules.eepower.domain.services import scenario_number, group_by_scenario
 from modules.eepower.infrastructure.file_validation import AF_COLUMNS, validate_file_epow, validate_report_filename
