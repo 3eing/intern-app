@@ -1,0 +1,32 @@
+{
+  "cc": {
+    "class": "TableauCourtCircuit",
+    "caption" : "Analyse de court-circuit",
+    "label": "cc"
+  },
+  "af": {
+    "class": "TableauArcFlash",
+    "caption": "Valeurs d'éclats d'arc électrique",
+    "label": "af"
+  },
+  "ed":{
+    "class": "TableauCapaciteProtection",
+    "caption": "Capacité en court-circuit des protections",
+    "label": "ed"
+  },
+  "electronique": {
+    "class": "TableauDisjoncteurElectronique",
+    "caption": "Ajustements des disjoncteurs électroniques",
+    "label": "disj-elec"
+  },
+  "magnetothermique":{
+    "class": "TableauDisjoncteurMagnetothermique",
+    "caption": "Ajustements des disjoncteurs magnétothermiques",
+    "label": "disj-magn"
+  },
+  "fuse": {
+    "class": "TableauFusibles",
+    "caption": "Calibre des fusibles ",
+    "label": "fuse"
+  }
+}

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}EasyPower — Outils internes{% endblock %}
+
+{% block content %}
+  <section id="intro">
+    <h1>Rapports EasyPower</h1>
+    {% set filename_examples = {
+      'AF': 'Arc_Flash_Scenario_Report.xlsx',
+      'ED': 'Equipment_Duty_Report.xlsx',
+      'TCC': 'TCC_Coordination_Report.xlsx'
+    } %}
+    <table id="file-help">
+      <thead>
+        <tr><th scope="col">Rapport</th><th scope="col">Format</th><th scope="col">Nom de fichier</th><th scope="col">Fichiers ajoutés</th></tr>
+      </thead>
+      <tbody>
+        {% for report_type, specification in report_formats.items() %}
+          <tr>
+            <th scope="row">{{ specification[0] }}</th>
+            <td>{{ specification[1] | join(' ou ') }}</td>
+            <td>
+              {% if report_type == 'CC' %}
+                <code>LV_Momentary_scen_1.csv</code><br>
+                <code>30_Cycle_Report_scen_1.xlsx</code><br>
+                <small>Suffixe _scen_N obligatoire ; même numéro pour les rapports associés.</small>
+              {% else %}
+                <code>{{ filename_examples[report_type] }}</code>
+              {% endif %}
+            </td>
+            <td class="upload-results" data-report="{{ report_type }}" aria-live="polite">
+              {% for result in report_files[report_type] %}
+                <div class="upload-result {{ 'upload-error' if result.error else 'upload-success' }}">
+                  {% if result.error %}
+                    <strong>Refusé — {{ result.filename }}</strong><br>
+                    {{ result.error }}
+                  {% else %}
+                    <strong>Ajouté</strong> — {{ result.filename }}
+                  {% endif %}
+                </div>
+              {% else %}
+                —
+              {% endfor %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+    {% if messages %}
+      <section id="message" aria-live="polite">
+        <ul class="flashes">
+          {% for category, message in messages %}
+            <li class="flash-{{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      </section>
+    {% endif %}
+
+  <section id="file_selector">
+    <form method="post" action="{{ url_for('eepower.eepower') }}" enctype="multipart/form-data">
+      <label for="file">Fichiers EasyPower</label>
+      <input id="file" type="file" name="file" multiple accept=".csv,.xlsx" aria-describedby="file-help" required>
+      <input type="hidden" name="btn_id" value="soumettre_fichier">
+      <button type="submit">Téléverser</button>
+    </form>
+  </section>
+
+  <section id="files">
+    {% if uploaded_files %}
+      <form method="post" action="{{ url_for('eepower.purge') }}">
+        <button type="submit">Purger les fichiers</button>
+      </form>
+
+      <form method="post" action="{{ url_for('eepower.eepower') }}">
+        <input type="hidden" name="btn_id" value="suivant">
+        <button type="submit">Suivant</button>
+      </form>
+    {% else %}
+      <p>Aucun fichier téléversé.</p>
+    {% endif %}
+  </section>
+{% endblock %}
