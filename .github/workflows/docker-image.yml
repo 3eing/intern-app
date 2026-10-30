@@ -4,7 +4,7 @@ name: Docker Image CI
 on:
   push:
     branches:
-      - restructuration
+      - main
 
   workflow_dispatch:
 
