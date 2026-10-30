@@ -5,12 +5,13 @@ from flask import Blueprint, current_app, flash, get_flashed_messages, redirect,
 from werkzeug.utils import secure_filename
 
 from modules.shared.infrastructure.filesystem import (
+    add_to_list_file,
     create_dir_if_dont_exist,
+    get_items_from_file,
     get_uploads_files,
     purge_file,
     zip_files,
 )
-from app.utils.File import add_to_list_file, get_items_from_file
 from modules.eepower.application.process_reports import generate_reports
 from modules.eepower.domain.services import scenario_finder
 from modules.eepower.infrastructure.file_validation import REPORT_FORMATS, identify_report_type, validate_file_epow, validate_report_filename
