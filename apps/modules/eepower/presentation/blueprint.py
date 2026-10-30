@@ -170,10 +170,18 @@ def eepower_traitement():
         if request.form['btn_id'] == 'ajouter_bus':
             if request.form['bus'] != '':
                 add_to_list_file(_buses_file(), str.upper(request.form['bus']))
-                eep_data["BUS_EXCLUS"] = get_items_from_file(_buses_file())
-                render_template('eepower/easy_power_traitement.html', nb_scen=eep_data["NB_SCEN"],
-                                bus_exclus=eep_data["BUS_EXCLUS"],
-                                file_ready=1)
+            return redirect(url_for('.eepower_traitement'))
+
+        elif request.form['btn_id'] == 'supprimer_bus':
+            try:
+                index = int(request.form.get('bus_index', ''))
+            except ValueError:
+                index = -1
+            buses = eep_data["BUS_EXCLUS"]
+            if 0 <= index < len(buses) and buses[index] == request.form.get('bus'):
+                del buses[index]
+                _buses_file().write_text(''.join(f'{bus}\n' for bus in buses))
+            return redirect(url_for('.eepower_traitement'))
 
         elif request.form['btn_id'] == 'suivant':
             try:
