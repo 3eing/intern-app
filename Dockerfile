@@ -10,6 +10,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt "gunicorn>=23,<24"
 
 COPY . .
+COPY modules/ ./modules/
+COPY config/ ./config/
 
 EXPOSE 8080
 
