@@ -39,7 +39,15 @@
       <h3>Motifs exclus</h3>
       <ul id="list_bus_exclus">
         {% for bus in bus_exclus %}
-          <li>{{ bus }}</li>
+          <li class="bus-exclusion">
+            <span>{{ bus }}</span>
+            <form method="post" action="{{ url_for('eepower.eepower_traitement') }}">
+              <input type="hidden" name="btn_id" value="supprimer_bus">
+              <input type="hidden" name="bus_index" value="{{ loop.index0 }}">
+              <input type="hidden" name="bus" value="{{ bus }}">
+              <button type="submit" class="remove-bus" aria-label="Supprimer le motif {{ bus }}" title="Supprimer le motif">&times;</button>
+            </form>
+          </li>
         {% endfor %}
       </ul>
     {% endif %}
