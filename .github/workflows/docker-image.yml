@@ -37,5 +37,5 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}:restructuration
+            ghcr.io/${{ github.repository }}:stable
             ghcr.io/${{ github.repository }}:${{ github.sha }}
